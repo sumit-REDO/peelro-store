@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+body {
+  background-color: #080c16;
+  color: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Custom dark scrollbar for cart drawer */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080c16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}
