@@ -1,57 +1,58 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Sparkles, Flame, Menu, X } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Sparkles } from 'lucide-react';
 
-export default function Navbar({ totalStickerCount, setIsCartOpen }) {
+export default function Navbar({ totalStickerCount, setIsCartOpen, searchQuery, setSearchQuery }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <>
-      {/* 1. TOP DYNAMIC INCENTIVE BANNER */}
-      <div className="bg-[#0b1329] border-b border-blue-900/40 text-xs py-2 px-4 text-center text-slate-300 sticky top-0 z-50">
-        {totalStickerCount >= 20 ? (
-          <span className="text-[#38bdf8] font-bold tracking-wide flex items-center justify-center gap-1.5">
-            <Sparkles size={14} className="text-[#e11d48]" /> Mega 20-Pack Active + FREE Express Delivery across India!
-          </span>
-        ) : totalStickerCount >= 10 ? (
-          <span className="text-white font-medium flex items-center justify-center gap-1">
-            <Flame size={14} className="text-[#e11d48]" /> 10-Pack active! Add <strong className="text-[#e11d48]">{20 - totalStickerCount} more</strong> for the 20-Pack + FREE Delivery!
-          </span>
-        ) : (
-          <span>
-            💡 Add <strong className="text-[#e11d48] font-bold">{10 - totalStickerCount} more stickers</strong> to automatically get any 10 for only <strong className="text-white">₹199</strong>!
-          </span>
-        )}
+      {/* 1. TOP ANNOUNCEMENT BAR */}
+      <div className="bg-[#f0ebe1] border-b border-[#e2dcd0] text-[11px] py-2 px-4 text-center text-[#44403c] sticky top-0 z-50 font-medium">
+        <span className="flex items-center justify-center gap-1.5">
+          <Sparkles size={13} className="text-[#dc2626]" />
+          <span><strong>Free Delivery</strong> across India on orders above ₹299 • Dispatched within 24–48 Hours</span>
+        </span>
       </div>
 
-      {/* 2. THE STICKY NAVBAR */}
-      <nav className="sticky top-[33px] z-40 bg-[#080c16]/90 backdrop-blur-md border-b border-blue-950/80">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      {/* 2. MAIN NAVBAR */}
+      <nav className="sticky top-[33px] z-40 bg-[#fbf9f5]/95 backdrop-blur-md border-b border-[#e8e4dc]">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           
-          {/* Brand Logo */}
-          <a href="#" className="flex items-center gap-1">
-            <span className="text-2xl font-black tracking-widest text-white">
-              PEELRO<span className="text-[#e11d48]">.</span>
-            </span>
+          {/* Clean Brand Logo */}
+          <a href="#" className="text-2xl font-black tracking-wider text-[#1c1917] shrink-0">
+            PEELRO
           </a>
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            <a href="#catalogue" className="hover:text-white transition">Shop Drops</a>
-            <a href="#bundles" className="hover:text-white transition">Pack Deals</a>
-            <a href="#why-peelro" className="hover:text-white transition">Durability Proof</a>
-            <a href="#faqs" className="hover:text-white transition">FAQs</a>
+          {/* Real-time Search Bar */}
+          <div className="hidden sm:flex items-center flex-1 max-w-xs relative">
+            <Search size={15} className="absolute left-3 text-[#78716c]" />
+            <input
+              type="text"
+              placeholder="Search stickers, anime, memes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#ffffff] border border-[#d6d0c4] focus:border-[#dc2626] text-[#1c1917] text-xs rounded-full pl-9 pr-4 py-2 outline-none transition shadow-2xs placeholder:text-[#a8a29e]"
+            />
           </div>
 
-          {/* Cart & Mobile Hamburger */}
-          <div className="flex items-center gap-3">
+          {/* Standard Navigation Links */}
+          <div className="hidden md:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-[#78716c]">
+            <a href="#catalogue" className="hover:text-[#dc2626] transition">All Stickers</a>
+            <a href="#bundles" className="hover:text-[#dc2626] transition">Sticker Packs</a>
+            <a href="#why-peelro" className="hover:text-[#dc2626] transition">Quality</a>
+            <a href="#faqs" className="hover:text-[#dc2626] transition">FAQs</a>
+          </div>
+
+          {/* Right Action: Cart & Mobile Menu */}
+          <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative bg-[#0d162c] hover:bg-[#13203f] border border-blue-800/40 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm cursor-pointer"
+              className="relative bg-[#ffffff] hover:bg-[#f5f2eb] border border-[#d6d0c4] text-[#1c1917] px-4 py-2 rounded-lg flex items-center gap-2 transition shadow-2xs cursor-pointer"
             >
-              <ShoppingBag size={16} className="text-[#e11d48]" />
-              <span className="text-xs font-bold uppercase tracking-wider">Bag</span>
+              <ShoppingBag size={16} className="text-[#dc2626]" />
+              <span className="text-xs font-bold uppercase tracking-wider">Cart</span>
               {totalStickerCount > 0 && (
-                <span className="bg-[#e11d48] text-white text-[11px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                <span className="bg-[#dc2626] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
                   {totalStickerCount}
                 </span>
               )}
@@ -59,26 +60,36 @@ export default function Navbar({ totalStickerCount, setIsCartOpen }) {
 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-slate-400 hover:text-white"
+              className="md:hidden p-2 text-[#78716c] hover:text-[#1c1917]"
             >
               {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown */}
+        {/* Mobile Search & Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#0b1224] border-b border-blue-950 px-6 py-4 space-y-3 text-xs font-semibold uppercase tracking-wider text-slate-300">
-            <a href="#catalogue" onClick={() => setIsMobileMenuOpen(false)} className="block py-1 hover:text-[#e11d48]">
-              Shop Drops
+          <div className="md:hidden bg-[#f5f2eb] border-b border-[#e8e4dc] px-4 py-4 space-y-3">
+            <div className="relative mb-3">
+              <Search size={15} className="absolute left-3 top-2.5 text-[#78716c]" />
+              <input
+                type="text"
+                placeholder="Search stickers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#ffffff] border border-[#d6d0c4] text-xs rounded-lg pl-9 pr-3 py-2 outline-none"
+              />
+            </div>
+            <a href="#catalogue" onClick={() => setIsMobileMenuOpen(false)} className="block text-xs font-bold uppercase py-1 text-[#57534e] hover:text-[#dc2626]">
+              All Stickers
             </a>
-            <a href="#bundles" onClick={() => setIsMobileMenuOpen(false)} className="block py-1 hover:text-[#e11d48]">
-              Pack Deals
+            <a href="#bundles" onClick={() => setIsMobileMenuOpen(false)} className="block text-xs font-bold uppercase py-1 text-[#57534e] hover:text-[#dc2626]">
+              Sticker Packs
             </a>
-            <a href="#why-peelro" onClick={() => setIsMobileMenuOpen(false)} className="block py-1 hover:text-[#e11d48]">
-              Durability Proof
+            <a href="#why-peelro" onClick={() => setIsMobileMenuOpen(false)} className="block text-xs font-bold uppercase py-1 text-[#57534e] hover:text-[#dc2626]">
+              Quality
             </a>
-            <a href="#faqs" onClick={() => setIsMobileMenuOpen(false)} className="block py-1 hover:text-[#e11d48]">
+            <a href="#faqs" onClick={() => setIsMobileMenuOpen(false)} className="block text-xs font-bold uppercase py-1 text-[#57534e] hover:text-[#dc2626]">
               FAQs
             </a>
           </div>

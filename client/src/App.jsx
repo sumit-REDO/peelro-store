@@ -1,33 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Sparkles, Trash2, ArrowRight, X, Tag, ShieldCheck, Droplets, Scissors, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingBag, Trash2, ArrowRight, X, Tag, Plus, Minus, AlertCircle, RefreshCw } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import QualitySpecs from './components/QualitySpecs';
+import ProductCard from './components/ProductCard';
+import BundleBanner from './components/BundleBanner';
+import Faq from './components/Faq';
 import Footer from './components/Footer';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export default function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [cart, setCart] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [openFaq, setOpenFaq] = useState(null);
 
-  // Fetch products from Node backend
+  // Persist Cart in localStorage
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('peelro_cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch {
+      return [];
+    }
+  });
+
   useEffect(() => {
-    fetch('http://localhost:5000/api/products')
-      .then((res) => res.json())
+    try {
+      localStorage.setItem('peelro_cart', JSON.stringify(cart));
+    } catch {
+      // Ignore
+    }
+  }, [cart]);
+
+  const fetchProducts = () => {
+    setLoading(true);
+    setFetchError(null);
+
+    fetch(`${API_BASE_URL}/api/products`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         setProducts(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Failed to load products:', err);
+        setFetchError('Unable to connect to inventory server. Make sure node server.js is running.');
         setLoading(false);
+        console.error(err);
       });
+  };
+
+  useEffect(() => {
+    fetchProducts();
   }, []);
 
-  const filteredProducts = activeCategory === 'all'
-    ? products
-    : products.filter((p) => p.category === activeCategory);
+  const filteredProducts = products.filter((p) => {
+    const title = p.title || '';
+    const desc = p.description || '';
+    const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          desc.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -40,6 +80,20 @@ export default function App() {
       return [...prev, { ...product, qty: 1 }];
     });
     setIsCartOpen(true);
+  };
+
+  const updateQuantity = (id, change) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item._id === id) {
+            const newQty = item.qty + change;
+            return newQty > 0 ? { ...item, qty: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean)
+    );
   };
 
   const removeFromCart = (id) => {
@@ -67,81 +121,40 @@ export default function App() {
   const shippingFee = totalStickerCount === 0 ? 0 : isFreeShipping ? 0 : 40;
   const total = subtotal + shippingFee;
 
-  const toggleFaq = (index) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
-
   return (
-    <div className="min-h-screen bg-[#080c16] text-slate-100 font-sans selection:bg-[#e11d48] selection:text-white">
+    <div className="min-h-screen bg-[#fbf9f5] text-[#1c1917] font-sans selection:bg-[#dc2626] selection:text-white">
       
-      {/* OUR MODULAR NAVBAR COMPONENT */}
       <Navbar 
         totalStickerCount={totalStickerCount} 
-        setIsCartOpen={setIsCartOpen} 
+        setIsCartOpen={setIsCartOpen}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
-      {/* HERO SECTION */}
       <Hero />
+      <QualitySpecs />
 
-      {/* QUALITY PROOF */}
-      <section id="why-peelro" className="py-16 bg-[#060912] border-b border-blue-950/60">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <span className="text-xs uppercase font-bold tracking-widest text-[#e11d48]">Anatomy of Quality</span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white mt-1">Why Normal Stickers Ruin Your Stuff</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#0b1224] border border-blue-950 p-6 rounded-2xl">
-              <div className="w-10 h-10 bg-blue-950/60 rounded-xl flex items-center justify-center text-[#38bdf8] mb-4">
-                <Droplets size={22} />
-              </div>
-              <h3 className="text-base font-bold text-white mb-2">100% Cold-Laminated Shield</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Cheap sticker paper turns into soggy mush when washed. PEELRO applies a crystal-clear 70μm protective film that locks ink in and keeps water, oil, and sweat completely out.
-              </p>
-            </div>
-
-            <div className="bg-[#0b1224] border border-blue-950 p-6 rounded-2xl">
-              <div className="w-10 h-10 bg-blue-950/60 rounded-xl flex items-center justify-center text-[#e11d48] mb-4">
-                <ShieldCheck size={22} />
-              </div>
-              <h3 className="text-base font-bold text-white mb-2">Coin & Key Scratch-Tested</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Laptop stickers live in cramped backpacks with chargers and keys. Our pressure-sensitive matte lamination absorbs abrasive friction with zero colour loss.
-              </p>
-            </div>
-
-            <div className="bg-[#0b1224] border border-blue-950 p-6 rounded-2xl">
-              <div className="w-10 h-10 bg-blue-950/60 rounded-xl flex items-center justify-center text-emerald-400 mb-4">
-                <Scissors size={22} />
-              </div>
-              <h3 className="text-base font-bold text-white mb-2">Clean Peel, No Sticky Gunk</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Nothing is worse than peeling an old sticker only to leave dirty adhesive residue on your expensive MacBook or phone. Our high-tack vinyl peels off cleanly.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CATALOGUE */}
+      {/* Catalogue */}
       <section id="catalogue" className="max-w-6xl mx-auto px-4 py-16">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 pb-4 border-b border-[#e8e4dc]">
           <div>
-            <span className="text-xs uppercase font-bold tracking-widest text-[#e11d48]">Available Drops</span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white mt-1">Explore Curated Stickers</h2>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#dc2626] block">
+              Our Collection
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1c1917] tracking-tight uppercase mt-0.5">
+              Available Stickers
+            </h2>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
             {['all', 'anime', 'tech', 'college', 'poster'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-semibold transition border cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-semibold transition border cursor-pointer ${
                   activeCategory === cat
-                    ? 'bg-[#e11d48] border-[#e11d48] text-white shadow-md shadow-rose-950/40'
-                    : 'bg-[#0d162c]/80 border-blue-900/40 text-slate-400 hover:border-blue-600 hover:text-white'
+                    ? 'bg-[#dc2626] text-white border-[#dc2626] shadow-xs'
+                    : 'bg-[#ffffff] border-[#d6d0c4] text-[#78716c] hover:border-[#dc2626] hover:text-[#dc2626]'
                 }`}
               >
                 {cat}
@@ -150,154 +163,66 @@ export default function App() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-20 text-slate-500 text-sm">
-            Fetching fresh stickers from MongoDB Atlas...
+        {loading && (
+          <div className="text-center py-20 text-[#78716c] text-xs">
+            Loading stickers from database...
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        )}
+
+        {fetchError && !loading && (
+          <div className="text-center py-12 px-4 max-w-md mx-auto bg-amber-50 border border-amber-200 rounded-2xl my-6">
+            <AlertCircle size={28} className="text-amber-600 mx-auto mb-2" />
+            <p className="text-xs font-bold text-[#1c1917] mb-1">{fetchError}</p>
+            <button
+              onClick={fetchProducts}
+              className="mt-3 inline-flex items-center gap-1.5 bg-[#1c1917] hover:bg-[#dc2626] text-white text-xs font-bold px-4 py-2 rounded-lg transition"
+            >
+              <RefreshCw size={13} />
+              <span>Retry Connection</span>
+            </button>
+          </div>
+        )}
+
+        {!loading && !fetchError && filteredProducts.length === 0 && (
+          <div className="text-center py-16 text-[#78716c]">
+            <p className="text-sm font-semibold mb-1">No stickers found matching "{searchQuery}"</p>
+            <p className="text-xs">Try searching for "anime", "cat", or "tech"</p>
+          </div>
+        )}
+
+        {!loading && !fetchError && filteredProducts.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-5">
             {filteredProducts.map((product) => (
-              <div
+              <ProductCard
                 key={product._id}
-                className="bg-[#0b1224] border border-blue-950 hover:border-blue-700/60 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-300 group hover:shadow-xl hover:shadow-blue-950/30"
-              >
-                <div className="h-60 bg-[#060a14] relative overflow-hidden flex items-center justify-center p-4">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.title}
-                    className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition duration-300"
-                  />
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className="bg-[#080c16]/90 backdrop-blur-md border border-blue-900/60 text-[#38bdf8] text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
-                      {product.finish || 'Matte'}
-                    </span>
-                    <span className="bg-[#080c16]/90 backdrop-blur-md border border-blue-900/40 text-slate-400 text-[10px] uppercase px-2 py-1 rounded-md">
-                      {product.size || '3-inch'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-white mb-1.5 group-hover:text-blue-300 transition">
-                      {product.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                      {product.description || 'Waterproof, scratchproof premium vinyl sticker.'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-blue-950">
-                    <div>
-                      <span className="text-[11px] text-slate-500 block uppercase">Single Price</span>
-                      <span className="text-xl font-extrabold text-white">₹{product.price}</span>
-                    </div>
-
-                    <button
-                      onClick={() => addToCart(product)}
-                      className="bg-[#e11d48] hover:bg-[#f43f5e] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md shadow-rose-950/50 active:scale-95 cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span>Add to Bag</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                product={product}
+                addToCart={addToCart}
+                cartItem={cart.find((item) => item._id === product._id)}
+              />
             ))}
           </div>
         )}
       </section>
 
-      {/* BUNDLE PROMO BANNER */}
-      <section id="bundles" className="py-12 bg-[#060912] border-y border-blue-950/60">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="bg-gradient-to-r from-[#0b1224] via-[#0f1a36] to-[#0b1224] border border-blue-800/40 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
-            <span className="text-xs uppercase font-extrabold tracking-widest text-[#e11d48]">Automatic Bundle Math</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2 mb-4">Pick Any 10 Stickers for ₹199</h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
-              Don't pay ₹49 per sticker. As soon as you add any 10 stickers to your bag, our cart automatically applies the ₹199 bundle rate (Save ₹291 instantly).
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto text-left">
-              <div className="bg-[#080c16]/80 border border-blue-900/40 p-4 rounded-xl">
-                <span className="text-xs text-slate-400 font-semibold block">10-PACK DEAL</span>
-                <span className="text-xl font-black text-white block mt-1">₹199</span>
-                <span className="text-[11px] text-slate-500">Flat ₹40 delivery across India</span>
-              </div>
-
-              <div className="bg-[#080c16]/80 border border-blue-900/40 p-4 rounded-xl">
-                <span className="text-xs text-[#38bdf8] font-semibold block">MEGA 20-PACK</span>
-                <span className="text-xl font-black text-white block mt-1">₹349</span>
-                <span className="text-[11px] text-emerald-400 font-bold">Includes FREE Express Shipping</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQS */}
-      <section id="faqs" className="max-w-3xl mx-auto px-4 py-16">
-        <div className="text-center mb-10">
-          <span className="text-xs uppercase font-bold tracking-widest text-[#e11d48]">Got Doubts?</span>
-          <h2 className="text-2xl sm:text-3xl font-black text-white mt-1">Frequently Asked Questions</h2>
-        </div>
-
-        <div className="space-y-3">
-          {[
-            {
-              q: "Will this leave sticky glue or ruin my laptop?",
-              a: "Zero sticky glue. We use automotive-grade release adhesive vinyl. When you want to remove or swap designs, it peels off cleanly without leaving gummy residue."
-            },
-            {
-              q: "Can I put these on water bottles and wash them?",
-              a: "Yes. Every sticker is protected with a waterproof cold-laminate barrier. You can wash your bottles with dish soap and cold water—the ink will not bleed or fade."
-            },
-            {
-              q: "How long does shipping take?",
-              a: "Orders are printed, laminated, hand-finished, and dispatched within 24–48 hours from Barrackpore. Delivery takes 2–3 days within West Bengal and 4–6 days nationwide via Speed Post / Courier."
-            },
-            {
-              q: "How does the 10-pack discount work?",
-              a: "You don't need any promo codes! Simply browse the store and click 'Add to Bag' on any 10 stickers you like. The cart automatically reduces the subtotal to ₹199."
-            }
-          ].map((faq, idx) => (
-            <div 
-              key={idx}
-              className="bg-[#0b1224] border border-blue-950 rounded-xl overflow-hidden cursor-pointer"
-              onClick={() => toggleFaq(idx)}
-            >
-              <div className="p-4 flex justify-between items-center text-sm font-bold text-white">
-                <span>{faq.q}</span>
-                <ChevronDown 
-                  size={16} 
-                  className={`text-[#e11d48] transition-transform duration-200 ${openFaq === idx ? 'rotate-180' : ''}`} 
-                />
-              </div>
-              {openFaq === idx && (
-                <div className="px-4 pb-4 text-xs text-slate-400 leading-relaxed border-t border-blue-950/60 pt-3">
-                  {faq.a}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FOOTER */}
+      <BundleBanner />
+      <Faq />
       <Footer />
 
-      {/* CART DRAWER */}
+      {/* Cart Drawer */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-[#0b1224] border-l border-blue-900/50 h-full p-6 flex flex-col justify-between shadow-2xl">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#ffffff] border-l border-[#e5dfd3] h-full p-6 flex flex-col justify-between shadow-2xl">
             <div>
-              <div className="flex justify-between items-center pb-4 border-b border-blue-950">
+              <div className="flex justify-between items-center pb-4 border-b border-[#e8e4dc]">
                 <div className="flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-[#e11d48]" />
-                  <h2 className="text-base font-bold text-white">Your Shopping Bag ({totalStickerCount})</h2>
+                  <ShoppingBag size={18} className="text-[#dc2626]" />
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-[#1c1917]">
+                    Shopping Bag ({totalStickerCount})
+                  </h2>
                 </div>
                 <button
                   onClick={() => setIsCartOpen(false)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
+                  className="text-[#78716c] hover:text-[#1c1917] p-1 rounded hover:bg-[#f5f2eb] cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -305,20 +230,42 @@ export default function App() {
 
               <div className="py-4 space-y-3 max-h-[50vh] overflow-y-auto pr-1">
                 {cart.length === 0 ? (
-                  <p className="text-slate-500 text-sm text-center py-12">Your bag is empty.</p>
+                  <p className="text-[#78716c] text-xs text-center py-12">Your bag is empty.</p>
                 ) : (
                   cart.map((item) => (
-                    <div key={item._id} className="flex justify-between items-center bg-[#070b16] p-3 rounded-xl border border-blue-950">
-                      <div>
-                        <h4 className="text-xs font-bold text-white mb-0.5">{item.title}</h4>
-                        <p className="text-xs text-blue-300">₹{item.price} each × {item.qty}</p>
+                    <div key={item._id} className="flex justify-between items-center bg-[#fbf9f5] p-3 rounded-lg border border-[#e5dfd3] text-xs">
+                      <div className="flex-1 mr-2">
+                        <h4 className="font-bold text-[#1c1917] mb-0.5 line-clamp-1">{item.title}</h4>
+                        <p className="text-[#78716c] font-semibold">₹{item.price * item.qty}</p>
                       </div>
-                      <button
-                        onClick={() => removeFromCart(item._id)}
-                        className="text-rose-500 hover:text-rose-400 p-1.5 cursor-pointer"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center border border-[#d6d0c4] rounded-lg bg-[#ffffff] overflow-hidden">
+                          <button
+                            onClick={() => updateQuantity(item._id, -1)}
+                            className="px-2 py-1 text-[#78716c] hover:bg-[#f5f2eb] hover:text-[#1c1917] transition cursor-pointer"
+                            title="Decrease quantity"
+                          >
+                            <Minus size={11} />
+                          </button>
+                          <span className="px-2 font-bold text-[#1c1917] text-xs">{item.qty}</span>
+                          <button
+                            onClick={() => updateQuantity(item._id, 1)}
+                            className="px-2 py-1 text-[#78716c] hover:bg-[#f5f2eb] hover:text-[#1c1917] transition cursor-pointer"
+                            title="Increase quantity"
+                          >
+                            <Plus size={11} />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => removeFromCart(item._id)}
+                          className="text-[#a8a29e] hover:text-rose-600 p-1.5 transition cursor-pointer"
+                          title="Remove item"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -326,42 +273,42 @@ export default function App() {
             </div>
 
             {cart.length > 0 && (
-              <div className="pt-4 border-t border-blue-950 space-y-2.5">
+              <div className="pt-4 border-t border-[#e8e4dc] space-y-2 text-xs">
                 {bundleDiscount > 0 && (
-                  <div className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-xs p-2.5 rounded-lg flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-semibold">
-                      <Tag size={14} className="text-[#e11d48]" /> {bundleName}
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] p-2.5 rounded-lg flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <Tag size={13} className="text-emerald-600" /> {bundleName}
                     </span>
-                    <span className="font-bold text-white">-₹{bundleDiscount.toFixed(0)}</span>
+                    <span className="font-bold">-₹{bundleDiscount.toFixed(0)}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Items Total ({totalStickerCount} stickers)</span>
+                <div className="flex justify-between text-[#57534e]">
+                  <span>Subtotal</span>
                   <span>
                     {bundleDiscount > 0 && (
-                      <span className="line-through text-slate-500 mr-1.5">₹{rawItemTotal}</span>
+                      <span className="line-through text-[#a8a29e] mr-1.5">₹{rawItemTotal}</span>
                     )}
-                    <span className="text-white font-medium">₹{subtotal.toFixed(0)}</span>
+                    <span className="text-[#1c1917] font-bold">₹{subtotal.toFixed(0)}</span>
                   </span>
                 </div>
 
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Shipping</span>
-                  <span>{shippingFee === 0 ? <strong className="text-emerald-400">FREE</strong> : `₹${shippingFee}`}</span>
+                <div className="flex justify-between text-[#57534e]">
+                  <span>Delivery</span>
+                  <span>{shippingFee === 0 ? <strong className="text-emerald-700">FREE</strong> : `₹${shippingFee}`}</span>
                 </div>
 
-                <div className="flex justify-between text-base font-bold text-white pt-2 border-t border-blue-950">
+                <div className="flex justify-between text-sm font-bold text-[#1c1917] pt-2 border-t border-[#e8e4dc]">
                   <span>Total</span>
-                  <span className="text-[#e11d48] text-xl font-black">₹{total.toFixed(0)}</span>
+                  <span className="text-[#dc2626] text-base font-black">₹{total.toFixed(0)}</span>
                 </div>
 
                 <button
                   onClick={() => alert(`Proceeding to checkout for ₹${total.toFixed(0)}!`)}
-                  className="w-full bg-[#e11d48] hover:bg-[#f43f5e] text-white font-bold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 mt-4 cursor-pointer shadow-lg shadow-rose-950/60"
+                  className="w-full bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold py-3.5 rounded-lg flex items-center justify-center gap-2 transition active:scale-95 mt-4 cursor-pointer text-xs uppercase tracking-wider shadow-sm"
                 >
                   <span>Proceed to Buy</span>
-                  <ArrowRight size={16} />
+                  <ArrowRight size={14} />
                 </button>
               </div>
             )}
