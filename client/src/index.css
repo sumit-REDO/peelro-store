@@ -1,0 +1,112 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  --ink: #0A1518;
+  --ink-soft: #1A1F22;
+  --purple: #FF0E1A;
+  --purple-bright: #FFFACD;
+  --purple-hot: #B50B16;
+  --canvas: #0A1518;
+  --line: #1F4A52;
+  --muted: #8B8F8E;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--canvas);
+  color: #FFFFFF;
+  min-height: 100vh;
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-sans {
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-serif,
+h1,
+h2,
+h3 {
+  font-family: "Bricolage Grotesque", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+[tabindex] {
+  outline-offset: 3px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--purple);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Smooth studio scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A1518;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F4A52;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF0E1A;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  display: flex;
+  width: max-content;
+  animation: ticker 28s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
